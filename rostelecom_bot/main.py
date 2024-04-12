@@ -5,7 +5,7 @@ import telebot
 from telebot import types
 
 
-token = '7088641468:AAEpy3fA7WSCfuZf00vp4NiKSjnELh5LmQE'  # Замените 'YOUR_TOKEN' на ваш токен бота
+token = 'YOUR TOKEN'  # Замените 'YOUR_TOKEN' на ваш токен бота
 bot = telebot.TeleBot(token)
 
 
