@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "rostelecom-bot"
+version = "0.1.0"
+description = "Telegram Bot for a case from Rostelecom"
+authors = ["Sergey Mitrofanov <mitrofanovsergey2001@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.10, <3.13"
+pytelegrambotapi = "^4.17.0"
+
+
+[tool.poetry.group.dev.dependencies]
+flake8 = "^7.0.0"
+mypy = "^1.9.0"
+pylint = "^3.1.0"
+pytest = "^8.1.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
