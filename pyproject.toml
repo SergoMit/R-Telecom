@@ -7,7 +7,9 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = ">=3.10, <3.13"
-pytelegrambotapi = "^4.17.0"
+aiogram = "^3.4.1"
+yadisk = "^2.1.0"
+python-dotenv = "^1.0.1"
 
 
 [tool.poetry.group.dev.dependencies]

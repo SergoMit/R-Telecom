@@ -1,31 +1,32 @@
 """
 Файл с реализацией рабочего интерфейса телеграм-бота
 """
-import telebot
-from telebot import types
+
+import asyncio
+import logging
+
+from aiogram import Bot, Dispatcher
+from rostelecom_bot.utils.config import configuration
+from aiogram.fsm.storage.memory import MemoryStorage
+from rostelecom_bot.handlers import common_handlers
 
 
-token = 'YOUR TOKEN'  # Замените 'YOUR_TOKEN' на ваш токен бота
-bot = telebot.TeleBot(token)
+async def main():
+    """Запуск бота"""
+    
+    bot = Bot(token=configuration['BOT_TOKEN'])
+    dp = Dispatcher(storage=MemoryStorage())
 
+    # Регистрация роутеров
+    dp.include_router(common_handlers.router)
+    
+    # Запуск бота и пропуск всех накопленных входящих
+    await bot.delete_webhook(drop_pending_updates=True)
+    await dp.start_polling(bot)
 
-@bot.message_handler(commands=['start'])
-def start(message):
-    keyboard = types.InlineKeyboardMarkup()
-    button1 = types.InlineKeyboardButton('Администратор', callback_data='button1')
-    button2 = types.InlineKeyboardButton('Пользователь', callback_data='button2')
-    keyboard.add(button1, button2)
-
-    bot.send_message(message.chat.id, 'Выберите профиль:', reply_markup=keyboard)
-
-
-@bot.callback_query_handler(func=lambda call: True)
-def callback_handler(call):
-    if call.data == 'button1':
-        bot.send_message(call.message.chat.id, 'Введите пароль')
-    elif call.data == 'button2':
-        bot.send_message(call.message.chat.id, 'Что я могу для вас сделать?')
-
-
-if __name__ == '__main__':
-    bot.infinity_polling()
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print('Exit')
