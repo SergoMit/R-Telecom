@@ -88,9 +88,6 @@ MG_database.db
 #log object
 py_log.log
 
-# environment object
-.env
-
 #pytest-cov files
 .coverage
 
