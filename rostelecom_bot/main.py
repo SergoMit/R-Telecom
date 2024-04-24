@@ -19,6 +19,7 @@ async def main():
     # Запуск бота и пропуск всех накопленных входящих
     await TgBot.bot.delete_webhook(drop_pending_updates=True)
     await TgBot.dp.start_polling(TgBot.bot)
+    
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)

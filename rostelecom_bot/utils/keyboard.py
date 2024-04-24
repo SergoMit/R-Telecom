@@ -1,11 +1,19 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
-admin_usr_kb = ReplyKeyboardMarkup(keyboard=[
-    [KeyboardButton(text='Администратор'), KeyboardButton(text='Пользователь')]
-], 
-resize_keyboard=True, input_field_placeholder='Выберите уровень доступа')
 
-usr_kb = ReplyKeyboardMarkup(keyboard=[
-    [KeyboardButton(text='Запросить данные'), KeyboardButton(text='Выйти')]
+admin_kb = ReplyKeyboardMarkup(keyboard=[
+    [KeyboardButton(text='Загрузить на диск'), KeyboardButton(text='Очистить диск')],
+    [KeyboardButton(text='Пользователь'), KeyboardButton(text='Запросить логи')]
 ], 
-resize_keyboard=True, input_field_placeholder='Выберите действие')
+resize_keyboard=True)
+
+
+cancel_upload_kb = ReplyKeyboardMarkup(keyboard=[
+    [KeyboardButton(text='Покинуть режим загрузки')]
+],
+resize_keyboard=True)
+
+
+cancel_authorisation = ReplyKeyboardMarkup(keyboard=[
+    [KeyboardButton(text='Покинуть авторизацию')]
+], resize_keyboard=True)

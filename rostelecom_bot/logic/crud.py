@@ -6,7 +6,6 @@
 from datetime import datetime
 import aiohttp
 from yadisk import AsyncClient
-from yadisk import YaDisk
 from rostelecom_bot.utils.config import configuration
 from rostelecom_bot.main import TgBot
 
@@ -50,7 +49,7 @@ async def check_yandex_disk(folder_path: str) -> str | bool:
                     files = await client.listdir(folder_path)
                     file_list = [i async for i in files]
                     if len(file_list) == 0:
-                        return f"Файлов не обнаружено."
+                        return f"Файлов не обнаружено"
                     else:
                         result = f"Обнаружено файлов: {len(file_list)}\n\r\n\r"
                         for file in file_list:
@@ -89,12 +88,4 @@ async def delete_from_yandex_disk(folder_path) -> str | bool:
 
 
 async def read_from_yandex_disk():
-    pass
-
-
-async def upload_from_yandex_disk():
-    pass
-
-
-async def modify_through_bot():
     pass
