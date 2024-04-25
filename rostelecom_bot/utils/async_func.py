@@ -14,3 +14,6 @@ async def add_admin_id(id_list: list, adm_id: int) -> None:
 
 async def get_password() -> str:
     return str(configuration['ADMIN_PASS'])
+
+async def returning_false() -> bool:
+    return False

@@ -17,3 +17,8 @@ resize_keyboard=True)
 cancel_authorisation = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton(text='Покинуть авторизацию')]
 ], resize_keyboard=True)
+
+
+cancel_get_data = ReplyKeyboardMarkup(keyboard=[
+    [KeyboardButton(text='Покинуть режим запроса')]
+], resize_keyboard=True)

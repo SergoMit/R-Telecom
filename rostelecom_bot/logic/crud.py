@@ -4,10 +4,10 @@
 """
 
 from datetime import datetime
-import aiohttp
 from yadisk import AsyncClient
 from rostelecom_bot.utils.config import configuration
-from rostelecom_bot.main import TgBot
+from rostelecom_bot.logic.bot_obj import TgBot
+from rostelecom_bot.utils.async_func import returning_false
 
 
 async def async_upload_to_yandex(folder_path: str, file_id: str, file_name) -> bool:
@@ -32,8 +32,7 @@ async def async_upload_to_yandex(folder_path: str, file_id: str, file_name) -> b
                 
                 return True
             except Exception as e:
-                print('Ошибка', e)
-                return False
+                raise e
         else:
             return False
 
@@ -58,8 +57,8 @@ async def check_yandex_disk(folder_path: str) -> str | bool:
                 else:
                     return f"Указанная папка не существует.\n\rЧтение невозможно!"
             except Exception as e:
-                print('Ошибка', e)
-                return False
+                returning_false()
+                raise e
         else:
             return False
 
@@ -82,10 +81,24 @@ async def delete_from_yandex_disk(folder_path) -> str | bool:
                 else:
                     return f"Указанная папка не существует.\n\rУдаление невозможно!"
             except Exception as e:
-                print("Ошибка", e)
-                return False
+                raise e
         return False
 
 
-async def read_from_yandex_disk():
-    pass
+async def read_from_yandex_disk(folder_path) -> str  | bool:
+    """Данная функция реализует скачивание данных  из указанной директории будет возвращать тлько бул"""
+    client = AsyncClient(token=configuration['YANDEX_TOKEN'])
+    async with client:
+        try:
+            if await client.check_token():
+                if await client.is_dir(folder_path):          
+                    files = await client.listdir(folder_path)
+                    file_list = [i async for i in files]      
+                    if len(file_list) > 0:
+                        for file in file_list:
+                            return await client.get_download_link(file['path'])
+                    else:
+                        raise ValueError
+
+        except Exception as e:
+            print("Ошибка", e)
