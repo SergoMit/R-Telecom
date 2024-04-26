@@ -150,7 +150,7 @@ async def delete_file_cmd(message: types.Message):
 async def send_log_file(message: types.Message):
     if message.from_user.id in st.AdminsList.ADMIN_ID:
         try:
-            with open("error.txt", "rb") as file:
+            with open("errors.txt", "rb") as file:
                 document = types.InputFile(file)
                 await message.reply_document(document)
         except Exception as e:
@@ -161,9 +161,11 @@ async def send_log_file(message: types.Message):
 # Функция, включённая в меню бота (общедоступная)
 @router.message(StateFilter(st.AuthStates.ADMIN, st.AuthStates.USER), Command("get_data"))
 async def read_data(message: types.Message, state: FSMContext):
-    st.PrevState.previous == await state.get_state()
+    st.PrevState.previous = await state.get_state()
     await state.set_state(st.Region.select)
-    await message.answer('Вы вошли в режим работы с данными', reply_markup=kb.cancel_get_data)
+    await message.answer('Вы вошли в режим работы с данными.\
+                          \n\rСкопируйте имя бота в строку ввода и начните вводить регион', reply_markup=kb.cancel_get_data)
+    await message.answer('@Samanter_bot')
 
 
 # Функция, включённая в меню бота (общедоступная)

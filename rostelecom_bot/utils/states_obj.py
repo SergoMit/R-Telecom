@@ -1,5 +1,9 @@
-from aiogram.fsm.state import State, StatesGroup
+"""
+В данном модуле содержатся все состояния, используемые FSMContext для 
+корректной работы бота
+"""
 
+from aiogram.fsm.state import State, StatesGroup
 
 
 class AdminsList:

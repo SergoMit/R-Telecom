@@ -1,17 +1,20 @@
-import rostelecom_bot.utils.phrases as phrase
-import rostelecom_bot.utils.keyboard as kb
-import rostelecom_bot.utils.async_func as af
-from rostelecom_bot.logic.crud import read_from_yandex_disk
+"""
+В данном модуле реализована логика выведения списка регионов пользователю,
+а также представлена обработка запроса, задаваемого пользователем
+"""
 
-from rostelecom_bot.utils.config import configuration
-from aiogram.fsm.context import FSMContext 
-from aiogram.types import ReplyKeyboardRemove
-
-from aiogram import Router, types, F
-import rostelecom_bot.utils.states_obj as st
-from aiogram.types import InlineQuery, InlineQueryResultArticle, InputTextMessageContent
-    
 import pandas as pd
+
+from aiogram.fsm.context import FSMContext
+from aiogram import Router, types, F
+from aiogram.types import ReplyKeyboardRemove, InlineQuery,\
+    InlineQueryResultArticle, InputTextMessageContent
+
+import rostelecom_bot.utils.states_obj as st
+import rostelecom_bot.utils.keyboard as kb
+
+from rostelecom_bot.logic.crud import read_from_yandex_disk
+from rostelecom_bot.utils.config import configuration
 
 
 reg_router = Router()
@@ -29,14 +32,15 @@ async def read(file) -> pd.DataFrame  | bool:
                             
 
 async def regions_list(data: pd.DataFrame) -> list:
-    p=data['Unnamed: 1'].tolist()
-    X=list()
+    p = data['Unnamed: 1'].tolist()
+    X = list()
     for i in p:
-        if  str(i).lower() != 'nan':
+        if str(i).lower() != 'nan':
             X.append(str(i).lower())
     
     X.reverse()
     return X
+
 
 @reg_router.inline_query(st.Region.select, F.query)
 async def show_inline_regions(inline_query: InlineQuery):
@@ -49,17 +53,15 @@ async def show_inline_regions(inline_query: InlineQuery):
         print(read_from_yandex_disk(configuration['DIRECTORY']))
         Param.cur_data = await read(await read_from_yandex_disk(configuration['DIRECTORY']))
         Param.cur_regions = await regions_list(Param.cur_data)
-        print(Param.cur_data)
 
-    print(Param.cur_regions)
     for i in Param.cur_regions:
         df_id += 1
         if b in i:
             a.append(InlineQueryResultArticle(
-                id=f'{df_id}',  # ссылки у нас уникальные, потому проблем не будет
-                title=i,
-                description=i,
-                input_message_content=InputTextMessageContent(
+                id = f'{df_id}',
+                title = i,
+                description = i,
+                input_message_content = InputTextMessageContent(
                 message_text = i,
                 parse_mode = "HTML"
                 ),
@@ -67,7 +69,7 @@ async def show_inline_regions(inline_query: InlineQuery):
                   
     await inline_query.answer(
         a, is_personal = True,
-        switch_pm_text = "Добавить ещё »»",
+        switch_pm_text = "Список регионов",
         switch_pm_parameter= "add"
     )    
 
@@ -75,16 +77,18 @@ async def show_inline_regions(inline_query: InlineQuery):
 async def cancel_get_data(message: types.Message, state: FSMContext):
     if st.PrevState.previous == st.AuthStates.ADMIN:
         await state.set_state(st.AuthStates.ADMIN)
-    else:
+        await message.answer("Вы вышли из режима запроса к данным", reply_markup=kb.admin_kb)
+    if st.PrevState.previous == st.AuthStates.USER:
         await state.set_state(st.AuthStates.USER)
+        await message.answer("Вы вышли из режима запроса к данным", reply_markup=ReplyKeyboardRemove())
     
     st.PrevState.previous = None
-    await message.answer("Вы вышли из режима запроса к данным", reply_markup=ReplyKeyboardRemove())
-    
+
+
+
 @reg_router.message(st.Region.select)
 async def show_celected_data(message: types.Message):
     '''Получаем данные из id пользователя телеграм data'''
-    print('zzzzzzz')
     
     mes = message.text
 

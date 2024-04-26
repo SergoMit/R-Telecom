@@ -1,3 +1,7 @@
+"""
+В данном модуле содержатся клавиатуры, используемые при работе бота
+"""
+
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 

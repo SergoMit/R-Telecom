@@ -11,7 +11,7 @@ from aiogram.types import ContentType
 async def on_error(update: types.Update, exception):
     """
     Обрабатывает исключения, возникшие в обработчиках сообщений.
-    Сохраняет информацию об исключении в файл error.txt.
+    Сохраняет информацию об исключении в файл errors.txt.
 
     Args:
         update: Обновление, вызвавшее исключение.
@@ -24,7 +24,7 @@ async def on_error(update: types.Update, exception):
 
 async def save_error(update: types.Update, exception: Exception):
     """
-    Сохраняет информацию об исключении в файл error.txt.
+    Сохраняет информацию об исключении в файл errors.txt.
 
     Args:
         update: Обновление, вызвавшее исключение.
@@ -42,7 +42,7 @@ async def save_error(update: types.Update, exception: Exception):
             Chat title: {chat_title}\n\rException: {exception}"
 
         # Сохранение сообщения об ошибке в файл
-        with open("error.txt", "a+") as file:
+        with open("errors.txt", "a+") as file:
             file.write(error_message)
     except Exception as e:
         logging.error(f"Возникла ошибка в ходе сохранения ошибки в лог-файл {e}")
