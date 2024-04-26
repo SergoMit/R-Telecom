@@ -171,7 +171,7 @@ async def read_data(message: types.Message, state: FSMContext):
 # Функция, включённая в меню бота (общедоступная)
 @router.message(StateFilter(st.AuthStates.ADMIN, st.AuthStates.USER), Command("check_disk"))
 async def check_disk_data(message: types.Message):
-    response = await crd.check_yandex_disk(configuration['DIRECTORY']) #намеренная ошибка. Правильно "DIRECTORY"
+    response = await crd.check_yandex_disk(configuration['DIRECTORY'])
     if response:
         await message.answer(response)
     else:
