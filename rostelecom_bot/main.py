@@ -5,21 +5,16 @@
 import asyncio
 import logging
 
-
 from rostelecom_bot.handlers import common_handlers, inline_reg_handlers
 from rostelecom_bot.logic.bot_obj import TgBot
-from rostelecom_bot.handlers.log_dispatcher import on_error
 
 
 async def main():
     """Запуск бота"""
-    logging.basicConfig(level=logging.INFO)
+    #logging.basicConfig(level=logging.INFO) - раскомментируйте, если нужно отслеживать изменения
 
     # Регистрация роутеров
     TgBot.dp.include_routers(common_handlers.router, inline_reg_handlers.reg_router)
-    
-    # Регистрация обработчика ошибок
-    TgBot.dp.errors.register(on_error)
 
     # Запуск бота и пропуск всех накопленных входящих
     try:

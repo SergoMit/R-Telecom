@@ -1,49 +1,59 @@
-import asyncio
 import logging
-import sys
+import os
 import traceback
-from aiogram import Bot, Dispatcher, types
-from aiogram.fsm.context import FSMContext
-from aiogram.filters.command import Command
-from aiogram.types import ContentType
+import aiofiles
+
+from aiogram import types
+import rostelecom_bot.utils.async_func as af
 
 
-async def on_error(update: types.Update, exception):
+async def on_error(message: types.Message, exception: Exception):
     """
-    Обрабатывает исключения, возникшие в обработчиках сообщений.
-    Сохраняет информацию об исключении в файл errors.txt.
+  Обрабатывает исключения, возникшие в обработчиках сообщений и других функциях, 
+  которые вызываются из обработчиков сообщений.
+  Сохраняет информацию об исключении в файл error.txt.
 
     Args:
-        update: Обновление, вызвавшее исключение.
+        message: Сообщение, вызвавшее исключение.
         exception: Исключение, которое было вызвано.
     """
-    logging.error("An error occurred while handling an update:")
+    logging.error("Возникла ошибка во время обработки сообщения:")
     logging.error(traceback.format_exc())
-    await save_error(update, exception)
+    await save_error(message, exception)
+        
 
-
-async def save_error(update: types.Update, exception: Exception):
+async def save_error(message: types.Update, exception: Exception):
     """
-    Сохраняет информацию об исключении в файл errors.txt.
+    Сохраняет информацию об исключении в файл error.txt.
+    Если файла не существует, создает его.
 
     Args:
-        update: Обновление, вызвавшее исключение.
+        message: Сообщение, вызвавшее исключение.
         exception: Исключение, которое было вызвано.
     """
+    if not os.path.exists(os.path.join(os.getcwd(), 'errors.txt')):
+        async with aiofiles.open(str(os.getcwd())+'/errors.txt', "w+") as file:
+            await file.write("Добро пожаловать в журнал ошибок телеграм-бота RT-DataFinder!\n\r")
+
     try:
         # Получение информации о пользователе и чате
-        user_id = update.message.from_user.id
-        user_name = update.message.from_user.username if update.message.from_user.username else "Unknown"
-        chat_id = update.message.chat.id
-        chat_title = update.message.chat.title if update.message.chat.title else "Unknown"
+        user_id = message.from_user.id
+        user_name = message.from_user.username if message.from_user.username else "Неизвестно"
+        chat_id = message.chat.id
+        chat_title = message.chat.title if message.chat.title else "Неизвестно"
 
         # Формирование сообщения об ошибке
-        error_message = f"User ID: {user_id}\n\rUser name: {user_name}\n\rChat ID: {chat_id}\n\r\
-            Chat title: {chat_title}\n\rException: {exception}"
+        error_message = f"-------- AN ERROR OCCURED --------\n\r"\
+                         f"User ID: {user_id}\n" \
+                         f"User name: {user_name}\n" \
+                         f"Chat ID: {chat_id}\n" \
+                         f"Chat title: {chat_title}\n" \
+                         f"Exception: {type(exception).__name__}\n"\
+                         f"Traceback: {traceback.format_exc()}\n\r"
 
         # Сохранение сообщения об ошибке в файл
-        with open("errors.txt", "a+") as file:
-            file.write(error_message)
-    except Exception as e:
-        logging.error(f"Возникла ошибка в ходе сохранения ошибки в лог-файл {e}")
+        async with aiofiles.open(os.path.join(os.getcwd(), 'errors.txt'), "a+") as file:
+            await file.write(error_message)
+    except Exception:
+        logging.error("Возникла ошибка во время сохранения ошибки:")
         logging.error(traceback.format_exc())

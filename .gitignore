@@ -86,7 +86,7 @@ ipython_config.py
 MG_database.db
 
 #log object
-py_log.log
+errors.txt
 
 #pytest-cov files
 .coverage

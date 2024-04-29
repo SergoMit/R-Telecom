@@ -4,12 +4,15 @@
 """
 import logging
 import traceback
+import os
+import aiofiles
 import rostelecom_bot.utils.phrases as phrase
 import rostelecom_bot.utils.keyboard as kb
 import rostelecom_bot.utils.async_func as af
 import rostelecom_bot.logic.crud as crd
 import rostelecom_bot.utils.states_obj as st
 
+from aiogram.types.input_file import FSInputFile
 from aiogram import Router, types, F
 from aiogram.types import ReplyKeyboardRemove
 from aiogram.filters.command import Command
@@ -19,6 +22,7 @@ from aiogram.utils.formatting import Text, Bold
 from aiogram.fsm.context import FSMContext
 
 from rostelecom_bot.utils.config import file_extension, configuration
+from rostelecom_bot.handlers.log_dispatcher import on_error
 
 
 # Фильтр, реагирующий на загрузку документов
@@ -46,17 +50,6 @@ async def cmd_start(message: types.Message, state: FSMContext):
     await message.answer("Список доступных команд указан в меню чат-бота")
 
 
-# Команда переключения на профиль пользователя
-@router.message(st.AuthStates.ADMIN, F.text == 'Пользователь')
-async def switch_to_user(message: types.Message, state: FSMContext):
-    if message.from_user.id not in st.AdminsList.ADMIN_ID:
-        await message.answer("Вы уже Пользователь!")
-    else:
-        await af.clear_admin_id(st.AdminsList.ADMIN_ID)
-        await state.set_state(st.AuthStates.USER)
-        await message.answer(phrase.greeting_usr, reply_markup=ReplyKeyboardRemove())
-
-
 # Команда переключения на профиль администратора
 @router.message(st.AuthStates.USER, Command("admin"))
 async def switch_to_admin(message: types.Message, state: FSMContext):
@@ -68,7 +61,7 @@ async def switch_to_admin(message: types.Message, state: FSMContext):
 
 
 # Отмена авторизации
-@router.message(st.AuthStates.wait_pass, F.text == 'Покинуть авторизацию')
+@router.message(st.AuthStates.wait_pass, F.text == 'Покинуть авторизацию 🚪')
 async def cancel_authorization(message: types.Message, state: FSMContext):
     await state.set_state(st.AuthStates.USER)
     await message.answer("Вы вышли из режима авторизации", reply_markup=ReplyKeyboardRemove())
@@ -86,16 +79,63 @@ async def authorizations(message: types.Message, state: FSMContext):
                              \n\rДля выхода из режима авторизации нажмите на кнопку 'Покинуть авторизацию'")
 
 
-# Команды, доступные только администратору
-@router.message(st.AuthStates.ADMIN, F.text == 'Загрузить на диск')
+""" Блок команд, доступных только администратору"""
+
+# Команда, переводящая в режим загрузки на Яндекс.Диск
+@router.message(st.AuthStates.ADMIN, F.text == 'Загрузить на диск 💾')
 async def admin_command(message: types.Message, state: FSMContext):
-    if message.from_user.id in st.AdminsList.ADMIN_ID:
-        await state.set_state(st.AuthStates.wait_file)
-        await message.answer("Вы вошли в режим загрузки.\
+    await state.set_state(st.AuthStates.wait_file)
+    await message.answer("Вы вошли в режим загрузки.\
                              \n\rЗагрузите файл в формате xls", reply_markup=kb.cancel_upload_kb)
 
+
+# Команда, очищающая Яндекс.Диск
+@router.message(st.AuthStates.ADMIN, F.text == 'Очистить диск 🗑')
+async def delete_file_cmd(message: types.Message):
+    try:
+        response = await crd.delete_from_yandex_disk(configuration['DIRECTORY'])
+        await message.answer(response)
+    except Exception as e:
+        await on_error(message, e)
+        await message.answer("Произошла ошибка во время удаления файла с Яндекс.Диска.\
+                             \n\rСведения о ней доступны администратору")
+
+
+# Команда, запрашивающая логи
+@router.message(st.AuthStates.ADMIN, F.text == "Запросить логи 📝")
+async def send_log_file(message: types.Message):
+    try:
+        document = FSInputFile(os.path.join(os.getcwd(), 'errors.txt'), filename="errors.txt")
+        await message.reply_document(document)
+    except Exception as e:
+        await message.answer(f"Возникла ошибка в ходе запроса лог-файла: {e}")
+        logging.error(traceback.format_exc())
+    
+
+# Команда, очищающая логи
+@router.message(st.AuthStates.ADMIN, F.text == "Очистить логи 🧹")
+async def clear_log_file(message: types.Message):
+    try:
+        async with aiofiles.open(os.path.join(os.getcwd(), 'errors.txt'), "w") as file:
+            await file.write('')
+            await file.write("Добро пожаловать в журнал ошибок телеграм-бота RT-DataFinder!\n\r")
+        await message.answer("Лог-файл успешно очищен!")
+    except Exception:
+        logging.error("Возникла ошибка в ходе очистки лог-файла:")
+        logging.error(traceback.format_exc())
+
+
+# Команда переключения на профиль пользователя
+@router.message(st.AuthStates.ADMIN, F.text == 'Пользователь 🧑‍💻')
+async def switch_to_user(message: types.Message, state: FSMContext):
+    if message.from_user.id not in st.AdminsList.ADMIN_ID:
+        await message.answer("Вы уже Пользователь!")
     else:
-        await message.answer("У вас нет доступа к данной команде")
+        await af.clear_admin_id(st.AdminsList.ADMIN_ID)
+        await state.set_state(st.AuthStates.USER)
+        await message.answer(phrase.greeting_usr, reply_markup=ReplyKeyboardRemove())
+
+"""Конец блока команд администратора"""
 
 
 # Загрузка на Яндекс.Диск файла, добавленного администратором
@@ -103,22 +143,25 @@ async def admin_command(message: types.Message, state: FSMContext):
 async def handle_document(message: types.Message, state: FSMContext):
     name_of_file = str(message.document.file_name)
     name_length = len(name_of_file)
+
     if name_of_file.endswith(file_extension, 0, name_length):
-        file_id = message.document.file_id
-        success = await crd.async_upload_to_yandex(configuration['DIRECTORY'], file_id, message.document.file_name)
-        if success:
+        try:
+            file_id = message.document.file_id
+            await crd.async_upload_to_yandex(configuration['DIRECTORY'], file_id, message.document.file_name)
             await state.set_state(st.AuthStates.ADMIN)
             await message.reply("Файл успешно загружен на Яндекс.Диск!", reply_markup=kb.admin_kb)
 
-        else:
-            await message.reply("Произошла ошибка при загрузке файла на Яндекс.Диск")
+        except Exception as e:
+            await on_error(message, e)
+            await message.reply("Произошла ошибка при загрузке файла на Яндекс.Диск.\
+                                \n\rСведения о ней доступны Администратору.")
     else:
         await message.answer("Некорректный формат документа.\
                              \n\rК загрузке допустимы файлы с расширением .xls/.xlsx")
 
 
 # Выход из режима загрузки файлов
-@router.message(st.AuthStates.wait_file, F.text == 'Покинуть режим загрузки')
+@router.message(st.AuthStates.wait_file, F.text == 'Покинуть режим загрузки 🚪')
 async def cancel_upload_file(message: types.Message, state: FSMContext):
     await state.set_state(st.AuthStates.ADMIN)
     await message.answer("Вы вышли из режима загрузки", reply_markup=kb.admin_kb)
@@ -129,33 +172,6 @@ async def cancel_upload_file(message: types.Message, state: FSMContext):
 async def wait_file_interceptor(message: types.Message):
     await message.answer("Данное сообщение не содержит xls-файл.\
                          \n\rДля выхода из режима загрузки нажмите кнопку 'Покинуть режим загрузки'")
-                                
-
-# Команды, доступные только администратору
-@router.message(st.AuthStates.ADMIN, F.text == 'Очистить диск')
-async def delete_file_cmd(message: types.Message):
-    if message.from_user.id in st.AdminsList.ADMIN_ID:
-        response = await crd.delete_from_yandex_disk(configuration['DIRECTORY'])
-        if response:
-            await message.answer(response)
-        else:
-            await message.answer("Произошла ошибка во время удаления файла с Яндекс.Диска")
-
-    else:
-        await message.answer("У вас нет доступа к данной команде")
-
-
-# Команды, доступные только администратору
-@router.message(st.AuthStates.ADMIN, F.text == "Запросить логи")
-async def send_log_file(message: types.Message):
-    if message.from_user.id in st.AdminsList.ADMIN_ID:
-        try:
-            with open("errors.txt", "rb") as file:
-                document = types.InputFile(file)
-                await message.reply_document(document)
-        except Exception as e:
-            await message.answer(f"Возникла ошибка в ходе запроса лог-файла: {e}")
-            logging.error(traceback.format_exc())
 
 
 # Функция, включённая в меню бота (общедоступная)
@@ -163,19 +179,21 @@ async def send_log_file(message: types.Message):
 async def read_data(message: types.Message, state: FSMContext):
     st.PrevState.previous = await state.get_state()
     await state.set_state(st.Region.select)
-    await message.answer('Вы вошли в режим работы с данными.\
-                          \n\rСкопируйте имя бота в строку ввода и начните вводить регион', reply_markup=kb.cancel_get_data)
-    await message.answer('@Samanter_bot')
+    await message.answer("Вы вошли в режим работы с данными.\
+                          \n\rСкопируйте имя бота в строку ввода и начните вводить регион", reply_markup=kb.cancel_get_data)
+    await message.answer("@Samanter_bot")
 
 
 # Функция, включённая в меню бота (общедоступная)
 @router.message(StateFilter(st.AuthStates.ADMIN, st.AuthStates.USER), Command("check_disk"))
 async def check_disk_data(message: types.Message):
-    response = await crd.check_yandex_disk(configuration['DIRECTORY'])
-    if response:
+    try:
+        response = await crd.check_yandex_disk(configuration['DIRECTORY'])
         await message.answer(response)
-    else:
-        await message.answer("Произошла ошибка при проверке файлов на Яндекс.Диске")
+    except Exception as e:
+        await on_error(message ,e)
+        await message.answer("Произошла ошибка при проверке файлов на Яндекс.Диске.\
+                             \n\rСведения о ней доступны Администратору")
 
 
 # Функция, включённая в меню бота (общедоступная)
