@@ -11,7 +11,7 @@ from rostelecom_bot.logic.bot_obj import TgBot
 
 async def main():
     """Запуск бота"""
-    #logging.basicConfig(level=logging.INFO) - раскомментируйте, если нужно отслеживать изменения
+    #logging.basicConfig(level=logging.INFO) - раскомментируйте, если необходимо отслеживать изменения
 
     # Регистрация роутеров
     TgBot.dp.include_routers(common_handlers.router, inline_reg_handlers.reg_router)

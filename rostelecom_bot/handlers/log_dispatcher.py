@@ -31,12 +31,10 @@ async def save_error(message: types.Update, exception: Exception):
         message: Сообщение, вызвавшее исключение.
         exception: Исключение, которое было вызвано.
     """
-    if not os.path.exists(os.path.join(os.getcwd(), 'errors.txt')):
-        async with aiofiles.open(str(os.getcwd())+'/errors.txt', "w+") as file:
-            await file.write("Добро пожаловать в журнал ошибок телеграм-бота RT-DataFinder!\n\r")
 
     try:
         # Получение информации о пользователе и чате
+        msg_date = message.date.strftime("%m/%d/%Y, %H:%M:%S")
         user_id = message.from_user.id
         user_name = message.from_user.username if message.from_user.username else "Неизвестно"
         chat_id = message.chat.id
@@ -44,10 +42,12 @@ async def save_error(message: types.Update, exception: Exception):
 
         # Формирование сообщения об ошибке
         error_message = f"-------- AN ERROR OCCURED --------\n\r"\
+                         f"Date: {msg_date}\n" \
                          f"User ID: {user_id}\n" \
                          f"User name: {user_name}\n" \
                          f"Chat ID: {chat_id}\n" \
                          f"Chat title: {chat_title}\n" \
+                         f"Message: {message.text}\n" \
                          f"Exception: {type(exception).__name__}\n"\
                          f"Traceback: {traceback.format_exc()}\n\r"
 

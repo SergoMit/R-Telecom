@@ -104,6 +104,10 @@ async def delete_file_cmd(message: types.Message):
 # Команда, запрашивающая логи
 @router.message(st.AuthStates.ADMIN, F.text == "Запросить логи 📝")
 async def send_log_file(message: types.Message):
+    if not os.path.exists(os.path.join(os.getcwd(), 'errors.txt')):
+        async with aiofiles.open(str(os.getcwd())+'/errors.txt', "w+") as file:
+            await file.write("Добро пожаловать в журнал ошибок телеграм-бота RT-DataFinder!\n\r")
+            
     try:
         document = FSInputFile(os.path.join(os.getcwd(), 'errors.txt'), filename="errors.txt")
         await message.reply_document(document)

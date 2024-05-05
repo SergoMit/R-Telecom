@@ -9,8 +9,9 @@ from rostelecom_bot.utils.config import configuration
 from rostelecom_bot.logic.bot_obj import TgBot
 
 
-async def get_yandex_client():
+async def get_yandex_client() -> AsyncClient:
     """Функция, устанавливающая связь с Яндекс.Диском"""
+
     client = AsyncClient(token=configuration['YANDEX_TOKEN'])
     if await client.check_token():
         return client
@@ -18,9 +19,10 @@ async def get_yandex_client():
         raise ValueError
 
 
-async def async_upload_to_yandex(folder_path: str, file_id: str, file_name):
+async def async_upload_to_yandex(folder_path: str, file_id: str, file_name: str) -> None:
     """Данная функция создаёт директорию для сохранения файла, если таковая отсутствует,
     и загружает в неё файл, отправленный администратором"""
+    
     async with await get_yandex_client() as client:
         try:
             file_info = await TgBot.bot.get_file(file_id)
@@ -40,9 +42,10 @@ async def async_upload_to_yandex(folder_path: str, file_id: str, file_name):
             raise e
 
 
-async def check_yandex_disk(folder_path: str) -> str | bool:
+async def check_yandex_disk(folder_path: str) -> str:
     """Данная функция проверяет наличие файлов и их количество
     при присутствии в указанной директории """
+
     async with await get_yandex_client() as client:
         try:
             if await client.is_dir(folder_path):
@@ -63,8 +66,9 @@ async def check_yandex_disk(folder_path: str) -> str | bool:
             raise e
 
 
-async def delete_from_yandex_disk(folder_path) -> str | bool:
+async def delete_from_yandex_disk(folder_path: str) -> str:
     """Данная функция реализует удаление файлов из указанной директории"""
+
     async with await get_yandex_client() as client:
         try:
             client = await get_yandex_client()
@@ -86,8 +90,9 @@ async def delete_from_yandex_disk(folder_path) -> str | bool:
             raise e
 
 
-async def read_from_yandex_disk(folder_path) -> str | bool:
+async def read_from_yandex_disk(folder_path: str) -> str:
     """Данная функция реализует скачивание данных  из указанной директории"""
+
     async with await get_yandex_client() as client:
         try:
             if await client.is_dir(folder_path):

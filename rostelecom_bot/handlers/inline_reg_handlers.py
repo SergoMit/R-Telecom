@@ -21,6 +21,7 @@ from rostelecom_bot.handlers.log_dispatcher import on_error
 reg_router = Router()
 
 
+# Класс-контейнер для хранения промежуточных данных
 class Param:
     cur_data = None
     cur_regions = None
